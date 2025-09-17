@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Numerics;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
@@ -33,7 +32,11 @@ namespace GameCore
 
             //Console.WriteLine($"f: {NetForce} | v:{Velocity.Length()}");
             float dt = GetFrameTime();
-            Velocity = Velocity.Length() > 0.01f ? Velocity * (1 - dt * 0.1f) : Vector2.Zero;
+
+            // damping
+            float damping = 0.7f;
+            Velocity = Velocity.Length() > 0.01f ? Velocity * (1 - dt * damping) : Vector2.Zero;
+            
             //ApplyForce(new Vector2(0, 9.81f * Mass));
             Vector2 acceleration = NetForce.Length() > 0 ? NetForce / Mass : Vector2.Zero;
             Velocity += acceleration * dt;
@@ -57,21 +60,21 @@ namespace GameCore
 
     public class Circle : PhysicsObject
     {
-        public float radius { get; private set; }
+        public float Radius { get; private set; }
 
         public Circle(Vector2 pos, float mass) : base(pos, mass)
         {
-            radius = 50f;
+            Radius = 50f;
         }
 
         public Circle(Vector2 pos, float mass, float radius) : base(pos, mass)
         {
-            this.radius = radius;
+            this.Radius = radius;
         }
 
         public override void Draw()
         {
-            DrawCircleV(Position, radius, Color.Black);
+            DrawCircleV(Position, Radius, Color.Black);
         }
 
         protected override bool Collide(PhysicsObject obj)
@@ -79,9 +82,27 @@ namespace GameCore
 
             if (obj is Circle c)
             {
-                if (Vector2.Distance(obj.Position, Position) <= c.radius + radius)
+                if (Vector2.Distance(obj.Position, Position) <= c.Radius + Radius)
                 {
-                    Console.WriteLine($"{obj.Position} {Position}");
+                    float theta = MathF.Atan2(obj.Position.Y - Position.Y, obj.Position.X - Position.X);
+
+                    float u1x = (Velocity.X * MathF.Sin(theta) - Velocity.Y * MathF.Cos(theta)) * MathF.Sin(theta) + (((Mass - obj.Mass) * (Velocity.X * MathF.Cos(theta) + Velocity.Y * MathF.Sin(theta)) + 2 * obj.Mass * (obj.Velocity.X * MathF.Cos(theta) + obj.Velocity.Y * MathF.Sin(theta))) / (Mass + obj.Mass) * MathF.Cos(theta));
+
+                    float u1y = (-Velocity.X * MathF.Sin(theta) + Velocity.Y * MathF.Cos(theta)) * MathF.Cos(theta) + (((Mass - obj.Mass) * (Velocity.X * MathF.Cos(theta) + Velocity.Y * MathF.Sin(theta)) + 2 * obj.Mass * (obj.Velocity.X * MathF.Cos(theta) + obj.Velocity.Y * MathF.Sin(theta))) / (Mass + obj.Mass) * MathF.Sin(theta));
+
+                    float u2x = (obj.Velocity.X * MathF.Sin(theta) - obj.Velocity.Y * MathF.Cos(theta)) * MathF.Sin(theta) + (((obj.Mass - Mass) * (obj.Velocity.X * MathF.Cos(theta) + obj.Velocity.Y * MathF.Sin(theta)) + 2 * Mass * (Velocity.X * MathF.Cos(theta) + Velocity.Y * MathF.Sin(theta))) / (Mass + obj.Mass) * MathF.Cos(theta));
+
+                    float u2y = (-obj.Velocity.X * MathF.Sin(theta) + obj.Velocity.Y * MathF.Cos(theta)) * MathF.Cos(theta) + (((obj.Mass - Mass) * (obj.Velocity.X * MathF.Cos(theta) + obj.Velocity.Y * MathF.Sin(theta)) + 2 * Mass * (Velocity.X * MathF.Cos(theta) + Velocity.Y * MathF.Sin(theta))) / (Mass + obj.Mass) * MathF.Sin(theta));
+
+                    Velocity = new(u1x, u1y);
+                    obj.Velocity = new(u2x, u2y);
+
+                    // fix for magnetism effect
+                    Vector2 normal = Vector2.Normalize(Position - obj.Position);
+                    Position += normal;
+                    obj.Position -= normal;
+
+                    Console.WriteLine($"{obj.Position} {Position} {theta}");
 
                     return true;
                 }
@@ -99,8 +120,8 @@ namespace GameCore
 
         public override void Draw()
         {
-            DrawCircleV(Position, radius, Color.Black);
-            DrawTextEx(GetFontDefault(), number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
+            DrawCircleV(Position, Radius, Color.Black);
+            DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
         }
     }
 

@@ -10,31 +10,34 @@ namespace GameCore
         private readonly string title = "Billard";
 
         private bool running = true;
-        private readonly Circle c = new(new(100, 100), 1f);
+        //private readonly Circle c = new(new(100, 100), 1f);
 
         private bool physicsRunning = false;
 
         public static readonly LinkedList<PhysicsObject> objects = new();
+        Circle white;
 
         public Game()
         {
             InitWindow(screenWidth, screenHeight, title);
-            SetTargetFPS(240);
-            objects.AddLast(c);
+            SetTargetFPS(480);
+            //objects.AddLast(c);
             int baseX = 300;
             int baseY = 402;
             int n = 1;
             // ball triangle
+            int mass = 50;
             for (int i = 0; i <= 4; i++)
             {
                 for (int j = 0; j <= 4 - i; j++)
                 {
-                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 25, (baseY + j * 25) + i * 25 / 2.2f), 20, n++, 25 / 2.2f));
+                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 25, (baseY + j * 25) + i * 25 / 2.2f), mass, n++, 25 / 2.2f));
 
                 }
             }
             // white ball
-            objects.AddLast(new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f));
+            white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f);
+            objects.AddLast(white);
         }
 
         // game loop
@@ -77,6 +80,12 @@ namespace GameCore
             DrawCircleGradient(200 + 500, 200 + 500, 27, Color.Black, VeryDarkGray);
             DrawCircleGradient(200 + 1000, 200 + 500, 25, Color.Black, VeryDarkGray);
 
+            if (white.Velocity.Length() == 0)
+            {
+                DrawLineV(white.Position, GetMousePosition(), white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
+            }
+
+
             // game objects
             foreach (PhysicsObject item in objects)
             {
@@ -98,22 +107,22 @@ namespace GameCore
                 if (item is Circle circle)
                 {
                     // boundaries
-                    if (circle.Position.Y > 700 - circle.radius)
+                    if (circle.Position.Y > 700 - circle.Radius)
                     {
                         circle.Position = new(circle.Position.X, circle.Position.Y - 1);
                         circle.Velocity = new(circle.Velocity.X, circle.Velocity.Y * -0.9f);
                     }
-                    if (circle.Position.Y <= 200 + circle.radius)
+                    if (circle.Position.Y <= 200 + circle.Radius)
                     {
                         circle.Position = new(circle.Position.X, circle.Position.Y + 1);
                         circle.Velocity = new(circle.Velocity.X, circle.Velocity.Y * -0.9f);
                     }
-                    if (circle.Position.X > 1200 - circle.radius)
+                    if (circle.Position.X > 1200 - circle.Radius)
                     {
                         circle.Position = new(circle.Position.X - 1, circle.Position.Y);
                         circle.Velocity = new(circle.Velocity.X * -0.9f, circle.Velocity.Y);
                     }
-                    if (circle.Position.X <= 200 + circle.radius)
+                    if (circle.Position.X <= 200 + circle.Radius)
                     {
                         circle.Position = new(circle.Position.X + 1, circle.Position.Y);
                         circle.Velocity = new(circle.Velocity.X * -0.9f, circle.Velocity.Y);
@@ -138,9 +147,9 @@ namespace GameCore
 
             if (IsKeyPressed(KeyboardKey.F))
             {
-                c.Position = new(100, 100);
+                /*c.Position = new(100, 100);
                 c.NetForce = Vector2.Zero;
-                c.Velocity = Vector2.Zero;
+                c.Velocity = Vector2.Zero;*/
             }
 
             if (IsKeyDown(KeyboardKey.Right))
@@ -159,25 +168,27 @@ namespace GameCore
             Vector2 pos = GetMousePosition();
             if (IsMouseButtonDown(MouseButton.Left))
             {
+                if (white.Velocity.Length() == 0)
+                {
+                    float distance = Vector2.Distance(white.Position, pos);
+                    white.Velocity = (Vector2.Subtract(white.Position, pos))/100;
+                    
+                }
+                /*
                 foreach (PhysicsObject item in objects)
                 {
                     if (item is Circle c)
                     {
-                        if (GetDistance(pos, c.Position) < c.radius)
+                        if (Vector2.Distance(pos, c.Position) < c.radius)
                         {
                             c.Position = pos;
                             c.NetForce = Vector2.Zero;
                             c.Velocity = GetMouseDelta() / GetFrameTime() / 1000;
                         }
                     }
-                }
+                }*/
 
             }
-        }
-        public static float GetDistance(Vector2 a, Vector2 b)
-        {
-            return Vector2.Distance(a, b);
-            //return (float)Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
         }
 
         private void Shutdown()
