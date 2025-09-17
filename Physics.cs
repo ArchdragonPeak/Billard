@@ -11,6 +11,8 @@ namespace GameCore
         public Vector2 NetForce { get; set; } = Vector2.Zero;
         public Vector2 Velocity { get; set; } = Vector2.Zero;
 
+        public bool Active { get; set; } = true;
+
         public PhysicsObject(Vector2 pos, float mass)
         {
             Position = pos;
@@ -29,6 +31,7 @@ namespace GameCore
 
         public void Update()
         {
+            if (Active == false) return;
 
             //Console.WriteLine($"f: {NetForce} | v:{Velocity.Length()}");
             float dt = GetFrameTime();
@@ -36,7 +39,7 @@ namespace GameCore
             // damping
             float damping = 0.7f;
             Velocity = Velocity.Length() > 0.01f ? Velocity * (1 - dt * damping) : Vector2.Zero;
-            
+
             //ApplyForce(new Vector2(0, 9.81f * Mass));
             Vector2 acceleration = NetForce.Length() > 0 ? NetForce / Mass : Vector2.Zero;
             Velocity += acceleration * dt;
@@ -48,7 +51,7 @@ namespace GameCore
             foreach (PhysicsObject item in Game.objects)
             {
                 if (item == this) continue;
-                Collide(item);
+                if (item.Active) Collide(item);
             }
         }
 
@@ -121,7 +124,7 @@ namespace GameCore
         public override void Draw()
         {
             DrawCircleV(Position, Radius, Color.Black);
-            DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
+            if (Active) DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
         }
     }
 

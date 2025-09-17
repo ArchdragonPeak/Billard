@@ -15,7 +15,8 @@ namespace GameCore
         private bool physicsRunning = false;
 
         public static readonly LinkedList<PhysicsObject> objects = new();
-        Circle white;
+        private readonly Circle white;
+        Vector2[] pocketArr;
 
         public Game()
         {
@@ -31,7 +32,7 @@ namespace GameCore
             {
                 for (int j = 0; j <= 4 - i; j++)
                 {
-                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 25, (baseY + j * 25) + i * 25 / 2.2f), mass, n++, 25 / 2.2f));
+                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 22, (baseY + j * 24) + i * 24 / 2.2f), mass, n++, 25 / 2.1f));
 
                 }
             }
@@ -72,13 +73,14 @@ namespace GameCore
 
             // pockets up: lmr -> down: lmr
             Color VeryDarkGray = new(50, 50, 50);
-            DrawCircleGradient(200, 200, 25, Color.Black, VeryDarkGray);
-            DrawCircleGradient(200 + 500, 200, 27, Color.Black, VeryDarkGray);
-            DrawCircleGradient(200 + 1000, 200, 25, Color.Black, VeryDarkGray);
-
-            DrawCircleGradient(200, 200 + 500, 25, Color.Black, VeryDarkGray);
-            DrawCircleGradient(200 + 500, 200 + 500, 27, Color.Black, VeryDarkGray);
-            DrawCircleGradient(200 + 1000, 200 + 500, 25, Color.Black, VeryDarkGray);
+            pocketArr = [
+                                new(200, 200), new(200 + 500, 200), new(200 + 1000, 200),
+                                new(200, 200 + 500), new(200 + 500, 200 + 500), new(200 + 1000, 200 + 500)
+                                ];
+            foreach (Vector2 pocket in pocketArr)
+            {
+                DrawCircleGradient((int)pocket.X, (int)pocket.Y, 25, Color.Black, VeryDarkGray);
+            }
 
             if (white.Velocity.Length() == 0)
             {
@@ -102,6 +104,17 @@ namespace GameCore
         {
             foreach (PhysicsObject item in objects)
             {
+                if (item is Circle cir)
+                {
+                    foreach (Vector2 pocket in pocketArr)
+                    {
+                        if (Vector2.Distance(item.Position, pocket) < 25)
+                        {
+                            item.Active = false;
+                        }
+                    }
+                }
+
                 item.Update();
 
                 if (item is Circle circle)
@@ -171,8 +184,8 @@ namespace GameCore
                 if (white.Velocity.Length() == 0)
                 {
                     float distance = Vector2.Distance(white.Position, pos);
-                    white.Velocity = (Vector2.Subtract(white.Position, pos))/100;
-                    
+                    white.Velocity = (Vector2.Subtract(white.Position, pos)) / 100;
+
                 }
                 /*
                 foreach (PhysicsObject item in objects)
