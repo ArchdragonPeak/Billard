@@ -95,29 +95,31 @@ namespace GameCore
             {
                 item.Update();
 
+                if (item is Circle circle)
+                {
+                    // boundaries
+                    if (circle.Position.Y > 700 - circle.radius)
+                    {
+                        circle.Position = new(circle.Position.X, circle.Position.Y - 1);
+                        circle.Velocity = new(circle.Velocity.X, circle.Velocity.Y * -0.9f);
+                    }
+                    if (circle.Position.Y <= 200 + circle.radius)
+                    {
+                        circle.Position = new(circle.Position.X, circle.Position.Y + 1);
+                        circle.Velocity = new(circle.Velocity.X, circle.Velocity.Y * -0.9f);
+                    }
+                    if (circle.Position.X > 1200 - circle.radius)
+                    {
+                        circle.Position = new(circle.Position.X - 1, circle.Position.Y);
+                        circle.Velocity = new(circle.Velocity.X * -0.9f, circle.Velocity.Y);
+                    }
+                    if (circle.Position.X <= 200 + circle.radius)
+                    {
+                        circle.Position = new(circle.Position.X + 1, circle.Position.Y);
+                        circle.Velocity = new(circle.Velocity.X * -0.9f, circle.Velocity.Y);
+                    }
+                }
 
-
-                // boundaries
-                if (c.Position.Y > screenHeight - c.radius)
-                {
-                    c.Position = new(c.Position.X, c.Position.Y - 1);
-                    c.Velocity = new(c.Velocity.X, c.Velocity.Y * -0.9f);
-                }
-                if (c.Position.Y <= 0 + c.radius)
-                {
-                    c.Position = new(c.Position.X, c.Position.Y + 1);
-                    c.Velocity = new(c.Velocity.X, c.Velocity.Y * -0.9f);
-                }
-                if (c.Position.X > screenWidth - c.radius)
-                {
-                    c.Position = new(c.Position.X - 1, c.Position.Y);
-                    c.Velocity = new(c.Velocity.X * -0.9f, c.Velocity.Y);
-                }
-                if (c.Position.X <= 0 + c.radius)
-                {
-                    c.Position = new(c.Position.X + 1, c.Position.Y);
-                    c.Velocity = new(c.Velocity.X * -0.9f, c.Velocity.Y);
-                }
             }
         }
 
@@ -157,24 +159,19 @@ namespace GameCore
             Vector2 pos = GetMousePosition();
             if (IsMouseButtonDown(MouseButton.Left))
             {
-
-                //Console.WriteLine($"mouse click on {pos.X}, {pos.Y}");
-                if (GetDistance(pos, new(605, 605)) < 100)
+                foreach (PhysicsObject item in objects)
                 {
-                    c.NetForce = (new Vector2(605, 605) - GetMousePosition()) * 20;
-                    c.Velocity = Vector2.Zero;
-                    c.Position = GetMousePosition();
-
-                }
-                else
-                {
-                    if (GetDistance(pos, c.Position) < c.radius)
+                    if (item is Circle c)
                     {
-                        c.Position = pos;
-                        c.NetForce = Vector2.Zero;
-                        c.Velocity = GetMouseDelta() / GetFrameTime() / 1000;
+                        if (GetDistance(pos, c.Position) < c.radius)
+                        {
+                            c.Position = pos;
+                            c.NetForce = Vector2.Zero;
+                            c.Velocity = GetMouseDelta() / GetFrameTime() / 1000;
+                        }
                     }
                 }
+
             }
         }
         public static float GetDistance(Vector2 a, Vector2 b)
