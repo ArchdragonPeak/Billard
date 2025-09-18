@@ -63,7 +63,7 @@ namespace GameCore
 
     public class Circle : PhysicsObject
     {
-        public float Radius { get; private set; }
+        public float Radius { get; set; }
 
         public Circle(Vector2 pos, float mass) : base(pos, mass)
         {
@@ -117,14 +117,22 @@ namespace GameCore
             }
         }
     }
-    public class PoolBall(Vector2 pos, float mass, int number, float radius) : Circle(pos, mass, radius)
+    public class PoolBall(Vector2 pos, float mass, int number, float radius, Color color) : Circle(pos, mass, radius)
     {
         public int Number { get; } = number;
-
+        public Color Color { get; set; } = color;
+        public float actualR { get; } = radius;
+        private Vector2 offset = new(3,-3);
+        private Color reflection = new(255, 255, 255, 100);
         public override void Draw()
         {
-            DrawCircleV(Position, Radius, Color.Black);
-            if (Active) DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
+            DrawCircleV(Position, Radius, Color);
+            if (Active)
+            {
+                DrawCircleGradient((int)(Position.X+offset.X), (int)(Position.Y+offset.Y), Radius/2, reflection, Color);
+                
+                DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
+            }
         }
     }
 

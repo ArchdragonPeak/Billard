@@ -18,6 +18,30 @@ namespace GameCore
         private readonly Circle white;
         Vector2[] pocketArr;
 
+        int round = 0;
+
+        bool ballsMoving = false;
+
+        readonly Color[] balls =
+        [
+            new Color(245, 245, 245, 255), // 0
+            new Color(230, 200,  40, 255), // 1
+            new Color( 40,  90, 180, 255), // 2
+            new Color(200,  50,  50, 255), // 3
+            new Color(140,  60, 160, 255), // 4
+            new Color(235, 120,  40, 255), // 5
+            new Color( 30, 110,  60, 255), // 6
+            new Color(110,  40,  40, 255), // 7
+            new Color( 25,  25,  25, 255), // 8
+            new Color(230, 200,  40, 255), // 9
+            new Color( 40,  90, 180, 255), // 10
+            new Color(200,  50,  50, 255), // 11
+            new Color(140,  60, 160, 255), // 12
+            new Color(235, 120,  40, 255), // 13
+            new Color( 30, 110,  60, 255), // 14
+            new Color(110,  40,  40, 255)  // 15
+        ];
+
         public Game()
         {
             InitWindow(screenWidth, screenHeight, title);
@@ -32,12 +56,12 @@ namespace GameCore
             {
                 for (int j = 0; j <= 4 - i; j++)
                 {
-                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 22, (baseY + j * 24) + i * 24 / 2.2f), mass, n++, 25 / 2.1f));
+                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 22, (baseY + j * 24) + i * 24 / 2.2f), mass, n++, 25 / 2.1f, balls[n - 1]));
 
                 }
             }
             // white ball
-            white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f);
+            white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f, Color.White);
             objects.AddLast(white);
         }
 
@@ -85,6 +109,16 @@ namespace GameCore
             if (white.Velocity.Length() == 0)
             {
                 DrawLineV(white.Position, GetMousePosition(), white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
+                Vector2 opp = white.Position - (GetMousePosition() - white.Position);
+                Vector2 n = GetMousePosition() - white.Position ;
+                n = new(-n.Y, n.X);
+
+                // debug: normal
+                //DrawLineV(opp + n/10, opp -n/10, Color.Black);
+                Color transparentGreen = Color.Green;
+                transparentGreen.A = 50;
+                DrawTriangle(opp - n / 7, opp + n / 7, white.Position, transparentGreen);
+                //DrawLineV(white.Position, opp, white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
             }
 
 
@@ -97,25 +131,43 @@ namespace GameCore
 
             DrawText($"FPS: {1 / GetFrameTime()}", 20, 20, 32, Color.White);
             DrawText($"Physics Running: {physicsRunning}", 20, 52, 32, physicsRunning ? Color.Green : Color.Orange);
+            DrawText($"moving? {ballsMoving}", 20, 84, 32, Color.White);
+            if (round > 0)
+            {
+                DrawText($"Round: {round}", 20, 84 + 32, 32, Color.White);
 
+                DrawText($"{(round % 2 == 1 ? "Player1" : "Player2")}", 500, 20, 32, Color.White);
+            }
+            else
+            {
+                DrawText("Player1", 500, 20, 32, Color.White);
+            }
             EndDrawing();
         }
         private void Update()
         {
+
             foreach (PhysicsObject item in objects)
             {
-                if (item is Circle cir)
+                item.Update();
+                if (item is PoolBall ball)
                 {
                     foreach (Vector2 pocket in pocketArr)
                     {
-                        if (Vector2.Distance(item.Position, pocket) < 25)
+                        if (Vector2.Distance(ball.Position, pocket) < 25)
                         {
-                            item.Active = false;
+                            ball.Active = false;
+                            if (ball.Radius > ball.actualR * 0.7f) ball.Radius *= 0.99f;
                         }
                     }
+
+                    // moving false, except one active ball is moving
+                    ballsMoving = false;
+                    if (ball.Active & ball.Velocity.Length() > 0) ballsMoving = true;
+
                 }
 
-                item.Update();
+
 
                 if (item is Circle circle)
                 {
@@ -181,11 +233,12 @@ namespace GameCore
             Vector2 pos = GetMousePosition();
             if (IsMouseButtonDown(MouseButton.Left))
             {
-                if (white.Velocity.Length() == 0)
+                if (!ballsMoving)
                 {
                     float distance = Vector2.Distance(white.Position, pos);
                     white.Velocity = (Vector2.Subtract(white.Position, pos)) / 100;
-
+                    round++;
+                    ballsMoving = true;
                 }
                 /*
                 foreach (PhysicsObject item in objects)
