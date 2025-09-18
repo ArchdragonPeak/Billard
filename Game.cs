@@ -84,6 +84,8 @@ namespace GameCore
             BeginDrawing();
             ClearBackground(Color.SkyBlue);
 
+            // table
+            DrawRectangleRounded(new Rectangle(170, 170, 1060, 560), 0.1f, 1, Color.DarkBrown);
             // field
             DrawRectangle(200, 200, 1000, 500, Color.DarkGreen);
             // boundaries up, down, left, right
