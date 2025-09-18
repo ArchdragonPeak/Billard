@@ -1,4 +1,5 @@
 using GameCore;
+using BilliardEnv;
 
 namespace Program
 {
@@ -9,6 +10,8 @@ namespace Program
         {
             game = new();
             game.Run();
+            //Server server = new Server();
+            //server.Start();
         }
     }
 }

@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Net;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 namespace GameCore
@@ -15,15 +13,20 @@ namespace GameCore
         private bool running = true;
         //private readonly Circle c = new(new(100, 100), 1f);
 
-        private bool physicsRunning = false;
+        private bool physicsRunning = true;
+
+        Random rand = new();
 
         public static LinkedList<PhysicsObject> objects = new();
         private Circle white;
         Vector2[] pocketArr;
 
-        int round = 0;
+        int round = 1;
+        bool hasChanged = false;
 
-        bool ballsMoving = false;
+        int strength = 5;
+
+        public bool ballsMoving = false;
 
         readonly Color[] balls =
         [
@@ -49,7 +52,13 @@ namespace GameCore
         {
             InitWindow(screenWidth, screenHeight, title);
             SetTargetFPS(480);
+            //ResetGame();
             ResetGame();
+
+            pocketArr = [
+                    new(200, 200), new(200 + 500, 200), new(200 + 1000, 200),
+                    new(200, 200 + 500), new(200 + 500, 200 + 500), new(200 + 1000, 200 + 500)
+                    ];
 
         }
 
@@ -66,7 +75,6 @@ namespace GameCore
 
             Shutdown();
         }
-
         private void Draw()
         {
             BeginDrawing();
@@ -87,27 +95,24 @@ namespace GameCore
 
             // pockets up: lmr -> down: lmr
             Color VeryDarkGray = new(50, 50, 50);
-            pocketArr = [
-                                new(200, 200), new(200 + 500, 200), new(200 + 1000, 200),
-                                new(200, 200 + 500), new(200 + 500, 200 + 500), new(200 + 1000, 200 + 500)
-                                ];
             foreach (Vector2 pocket in pocketArr)
             {
                 DrawCircleGradient((int)pocket.X, (int)pocket.Y, 25, Color.Black, VeryDarkGray);
             }
 
-            if (white.Velocity.Length() == 0)
+            if (white.Velocity.Length() == 0 && white.Active)
             {
                 DrawLineV(white.Position, GetMousePosition(), white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
-                Vector2 opp = white.Position - (GetMousePosition() - white.Position);
-                Vector2 n = GetMousePosition() - white.Position;
+                Vector2 opp = white.Position - (Vector2.Normalize((GetMousePosition() - white.Position))*500);
+                Vector2 n = (GetMousePosition() - white.Position);
                 n = new(-n.Y, n.X);
+                n *= (strength/4f);
 
                 // debug: normal
                 //DrawLineV(opp + n/10, opp -n/10, Color.Black);
                 Color transparentGreen = Color.Green;
                 transparentGreen.A = 50;
-                DrawTriangle(opp - n / 7, opp + n / 7, white.Position, transparentGreen);
+                DrawTriangle(opp - (n / 7), opp + n / 7, white.Position, transparentGreen);
                 //DrawLineV(white.Position, opp, white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
             }
 
@@ -134,9 +139,9 @@ namespace GameCore
             }
             EndDrawing();
         }
-        private void Update()
+        public void Update()
         {
-
+            ballsMoving = false;
             foreach (PhysicsObject item in objects)
             {
                 item.Update();
@@ -147,13 +152,13 @@ namespace GameCore
                         if (Vector2.Distance(ball.Position, pocket) < 25)
                         {
                             ball.Active = false;
+                            ball.Velocity = Vector2.Zero;
                             if (ball.Radius > ball.actualR * 0.7f) ball.Radius *= 0.99f;
                         }
                     }
 
                     // moving false, except one active ball is moving
-                    ballsMoving = false;
-                    if (ball.Active & ball.Velocity.Length() > 0) ballsMoving = true;
+                    if (ball.Velocity.Length() > 0) ballsMoving = true;
 
                 }
 
@@ -185,6 +190,12 @@ namespace GameCore
                 }
 
             }
+            if(!ballsMoving && hasChanged)
+            {
+                round++;
+            }
+
+            hasChanged = ballsMoving;
         }
 
         // keyboard
@@ -200,12 +211,13 @@ namespace GameCore
                 physicsRunning = !physicsRunning;
             }
 
-            if (IsKeyPressed(KeyboardKey.F))
+            if (IsKeyDown(KeyboardKey.F))
             {
                 /*c.Position = new(100, 100);
                 c.NetForce = Vector2.Zero;
                 c.Velocity = Vector2.Zero;*/
                 ResetGame();
+                //RandomReset();
             }
 
             if (IsKeyDown(KeyboardKey.Right))
@@ -221,14 +233,24 @@ namespace GameCore
 
         private void HandleMouse()
         {
+            strength += (int)GetMouseWheelMove();
+            if(strength > 10) strength = 10;
+            if(strength < 1) strength = 1;
+
+            if(GetMouseWheelMove()!=0)
+            {
+                Debug.WriteLine(strength);
+            }
+
             Vector2 pos = GetMousePosition();
-            if (IsMouseButtonDown(MouseButton.Left))
+            if (IsMouseButtonReleased(MouseButton.Left) && physicsRunning)
             {
                 if (!ballsMoving)
                 {
                     //float distance = Vector2.Distance(white.Position, pos);
-                    white.Velocity = (Vector2.Subtract(white.Position, pos)) / 100;
-                    round++;
+                    Vector2 newVelocity = (Vector2.Subtract(white.Position, pos)) / 150;
+                    Debug.WriteLine(newVelocity.Length());
+                    white.Velocity = Vector2.Normalize(newVelocity)*strength;
                     ballsMoving = true;
                 }
                 /*
@@ -248,13 +270,13 @@ namespace GameCore
             }
         }
 
-        private void Shoot(float theta, int strength)
+        public void Shoot(float theta, int strength)
         {
             white.Velocity = new(strength * MathF.Cos(theta), strength * MathF.Sin(theta));
             round++;
             ballsMoving = true;
         }
-        private List<(float, float)> GetTable()
+        public List<(float, float)> GetTable()
         {
             List<(float, float)> table = [];
             foreach (PhysicsObject item in objects)
@@ -274,10 +296,10 @@ namespace GameCore
             }
             return table;
         }
-        private void ResetGame()
+        public void ResetGame()
         {
             objects = new();
-            round = 0;
+            round = 1;
             ballsMoving = false;
             int baseX = 300;
             int baseY = 402;
@@ -296,6 +318,49 @@ namespace GameCore
             // white ball
             white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f, Color.White);
             objects.AddLast(white);
+        }
+
+        public void RandomReset()
+        {
+            objects = new();
+            round = 0;
+            ballsMoving = false;
+            int baseX = 230;
+            int baseY = 230;
+            int n = 1;
+            bool notFound = true;
+            Vector2 possiblePos = new();
+            // ball triangle
+            int mass = 50;
+
+
+            // white ball
+            white = new PoolBall(new Vector2(baseX + rand.Next(950), baseY + rand.Next(450)), 20, 0, 25 / 2.2f, Color.White);
+            objects.AddLast(white);
+            for (int i = 0; i <= 4; i++)
+            {
+                for (int j = 0; j <= 4 - i; j++)
+                {
+                    while (true)
+                    {
+                        possiblePos = new(baseX + rand.Next(950), baseY + rand.Next(450));
+                        bool collision = false;
+
+                        foreach (var item in objects)
+                        {
+                            if (Vector2.Distance(possiblePos, item.Position) <= 23)
+                            {
+                                collision = true;
+                                break;
+                            }
+                        }
+
+                        if (!collision) break;
+                    }
+
+                    objects.AddLast(new PoolBall(possiblePos, mass, n++, 25 / 2.1f, balls[n - 1]));
+                }
+            }
         }
 
         private void Shutdown()

@@ -35,7 +35,9 @@ namespace GameCore
             if (Active == false) return;
 
             //Console.WriteLine($"f: {NetForce} | v:{Velocity.Length()}");
-            float dt = GetFrameTime();
+
+            // easy fix
+            float dt = GetFrameTime() > 0? GetFrameTime():0.01f;
 
             // damping
             float damping = 0.7f;
@@ -106,7 +108,7 @@ namespace GameCore
                     Position += normal;
                     obj.Position -= normal;
 
-                    Console.WriteLine($"{obj.Position} {Position} {theta}");
+                    //Console.WriteLine($"{obj.Position} {Position} {theta}");
                     Collisions.Add((this, obj));
 
                     return true;
