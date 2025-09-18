@@ -1,4 +1,7 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Net;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 namespace GameCore
@@ -14,8 +17,8 @@ namespace GameCore
 
         private bool physicsRunning = false;
 
-        public static readonly LinkedList<PhysicsObject> objects = new();
-        private readonly Circle white;
+        public static LinkedList<PhysicsObject> objects = new();
+        private Circle white;
         Vector2[] pocketArr;
 
         int round = 0;
@@ -46,23 +49,8 @@ namespace GameCore
         {
             InitWindow(screenWidth, screenHeight, title);
             SetTargetFPS(480);
-            //objects.AddLast(c);
-            int baseX = 300;
-            int baseY = 402;
-            int n = 1;
-            // ball triangle
-            int mass = 50;
-            for (int i = 0; i <= 4; i++)
-            {
-                for (int j = 0; j <= 4 - i; j++)
-                {
-                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 22, (baseY + j * 24) + i * 24 / 2.2f), mass, n++, 25 / 2.1f, balls[n - 1]));
+            ResetGame();
 
-                }
-            }
-            // white ball
-            white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f, Color.White);
-            objects.AddLast(white);
         }
 
         // game loop
@@ -112,7 +100,7 @@ namespace GameCore
             {
                 DrawLineV(white.Position, GetMousePosition(), white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
                 Vector2 opp = white.Position - (GetMousePosition() - white.Position);
-                Vector2 n = GetMousePosition() - white.Position ;
+                Vector2 n = GetMousePosition() - white.Position;
                 n = new(-n.Y, n.X);
 
                 // debug: normal
@@ -217,6 +205,7 @@ namespace GameCore
                 /*c.Position = new(100, 100);
                 c.NetForce = Vector2.Zero;
                 c.Velocity = Vector2.Zero;*/
+                ResetGame();
             }
 
             if (IsKeyDown(KeyboardKey.Right))
@@ -237,7 +226,7 @@ namespace GameCore
             {
                 if (!ballsMoving)
                 {
-                    float distance = Vector2.Distance(white.Position, pos);
+                    //float distance = Vector2.Distance(white.Position, pos);
                     white.Velocity = (Vector2.Subtract(white.Position, pos)) / 100;
                     round++;
                     ballsMoving = true;
@@ -257,6 +246,56 @@ namespace GameCore
                 }*/
 
             }
+        }
+
+        private void Shoot(float theta, int strength)
+        {
+            white.Velocity = new(strength * MathF.Cos(theta), strength * MathF.Sin(theta));
+            round++;
+            ballsMoving = true;
+        }
+        private List<(float, float)> GetTable()
+        {
+            List<(float, float)> table = [];
+            foreach (PhysicsObject item in objects)
+            {
+                if (item is PoolBall p)
+                {
+                    if (item.Active)
+                    {
+                        table.Add((p.Position.X, p.Position.Y));
+                    }
+                    else
+                    {
+                        table.Add((0, 0));
+                    }
+
+                }
+            }
+            return table;
+        }
+        private void ResetGame()
+        {
+            objects = new();
+            round = 0;
+            ballsMoving = false;
+            int baseX = 300;
+            int baseY = 402;
+            int n = 1;
+
+            // ball triangle
+            int mass = 50;
+            for (int i = 0; i <= 4; i++)
+            {
+                for (int j = 0; j <= 4 - i; j++)
+                {
+                    objects.AddLast(new PoolBall(new Vector2(baseX + i * 22, (baseY + j * 24) + i * 24 / 2.2f), mass, n++, 25 / 2.1f, balls[n - 1]));
+
+                }
+            }
+            // white ball
+            white = new PoolBall(new Vector2(baseX + 700, baseY + 50), 20, 0, 25 / 2.2f, Color.White);
+            objects.AddLast(white);
         }
 
         private void Shutdown()

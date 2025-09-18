@@ -10,8 +10,9 @@ namespace GameCore
         public float Mass { get; set; }
         public Vector2 NetForce { get; set; } = Vector2.Zero;
         public Vector2 Velocity { get; set; } = Vector2.Zero;
-
         public bool Active { get; set; } = true;
+
+        public static readonly List<(PhysicsObject, PhysicsObject)> Collisions = [];
 
         public PhysicsObject(Vector2 pos, float mass)
         {
@@ -106,6 +107,7 @@ namespace GameCore
                     obj.Position -= normal;
 
                     Console.WriteLine($"{obj.Position} {Position} {theta}");
+                    Collisions.Add((this, obj));
 
                     return true;
                 }
@@ -122,15 +124,15 @@ namespace GameCore
         public int Number { get; } = number;
         public Color Color { get; set; } = color;
         public float actualR { get; } = radius;
-        private Vector2 offset = new(3,-3);
+        private Vector2 offset = new(3, -3);
         private Color reflection = new(255, 255, 255, 100);
         public override void Draw()
         {
             DrawCircleV(Position, Radius, Color);
             if (Active)
             {
-                DrawCircleGradient((int)(Position.X+offset.X), (int)(Position.Y+offset.Y), Radius/2, reflection, Color);
-                
+                DrawCircleGradient((int)(Position.X + offset.X), (int)(Position.Y + offset.Y), Radius / 2, reflection, Color);
+
                 DrawTextEx(GetFontDefault(), Number.ToString(), Position - new Vector2(5, 5), 16, 1, Color.White);
             }
         }
