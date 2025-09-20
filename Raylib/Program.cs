@@ -1,7 +1,6 @@
 using GameCore;
-using BilliardEnv;
 
-namespace Program
+namespace Raylib
 {
     public class Program
     {

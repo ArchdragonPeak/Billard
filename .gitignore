@@ -1,6 +1,5 @@
 .vscode
 bin
 obj
-*.csproj
 *.nettrace
 *.txt
