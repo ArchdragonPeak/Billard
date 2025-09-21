@@ -105,10 +105,10 @@ namespace GameCore
             if (white.Velocity.Length() == 0 && white.Active)
             {
                 DrawLineV(white.Position, GetMousePosition(), white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
-                Vector2 opp = white.Position - (Vector2.Normalize((GetMousePosition() - white.Position))*500);
+                Vector2 opp = white.Position - (Vector2.Normalize((GetMousePosition() - white.Position)) * 500);
                 Vector2 n = (GetMousePosition() - white.Position);
                 n = new(-n.Y, n.X);
-                n *= (strength/4f);
+                n *= (strength / 4f);
 
                 // debug: normal
                 //DrawLineV(opp + n/10, opp -n/10, Color.Black);
@@ -118,13 +118,11 @@ namespace GameCore
                 //DrawLineV(white.Position, opp, white.Velocity.Length() == 0 ? Color.Blue : Color.Red);
             }
 
-
             // game objects
             foreach (PhysicsObject item in objects)
             {
                 item.Draw();
             }
-
 
             DrawText($"FPS: {1 / GetFrameTime()}", 20, 20, 32, Color.White);
             DrawText($"Physics Running: {physicsRunning}", 20, 52, 32, physicsRunning ? Color.Green : Color.Orange);
@@ -164,8 +162,6 @@ namespace GameCore
 
                 }
 
-
-
                 if (item is Circle circle)
                 {
                     // boundaries
@@ -192,7 +188,7 @@ namespace GameCore
                 }
 
             }
-            if(!ballsMoving && hasChanged)
+            if (!ballsMoving && hasChanged)
             {
                 round++;
             }
@@ -236,10 +232,10 @@ namespace GameCore
         private void HandleMouse()
         {
             strength += (int)GetMouseWheelMove();
-            if(strength > 10) strength = 10;
-            if(strength < 1) strength = 1;
+            if (strength > 10) strength = 10;
+            if (strength < 1) strength = 1;
 
-            if(GetMouseWheelMove()!=0)
+            if (GetMouseWheelMove() != 0)
             {
                 Debug.WriteLine(strength);
             }
@@ -252,7 +248,7 @@ namespace GameCore
                     //float distance = Vector2.Distance(white.Position, pos);
                     Vector2 newVelocity = (Vector2.Subtract(white.Position, pos)) / 150;
                     Debug.WriteLine(newVelocity.Length());
-                    white.Velocity = Vector2.Normalize(newVelocity)*strength;
+                    white.Velocity = Vector2.Normalize(newVelocity) * strength;
                     ballsMoving = true;
                 }
                 /*

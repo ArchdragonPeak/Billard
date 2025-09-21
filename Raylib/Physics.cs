@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
@@ -13,6 +11,8 @@ namespace GameCore
         public Vector2 NetForce { get; set; } = Vector2.Zero;
         public Vector2 Velocity { get; set; } = Vector2.Zero;
         public bool Active { get; set; } = true;
+
+        public static float FrameTime { get; set; } = 0.01f;
 
         public static readonly List<(PhysicsObject, PhysicsObject)> Collisions = [];
 
@@ -39,7 +39,7 @@ namespace GameCore
             //Console.WriteLine($"f: {NetForce} | v:{Velocity.Length()}");
 
             // easy fix
-            float dt = GetFrameTime() > 0? GetFrameTime():0.01f;
+            float dt = GetFrameTime() > 0 ? GetFrameTime() : FrameTime;
 
             // damping
             float damping = 0.7f;
